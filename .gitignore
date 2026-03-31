@@ -1,0 +1,21 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+# もし .js ファイルも一緒に管理したい場合は、ここをコメントアウトしてください
+*.js
+*.d.ts
+*.d.ts.map
+dist/
+build/
+
+# Application data
+todo.json
+todos.json
+
+# OS files
+.DS_Store
+Thumbs.db
