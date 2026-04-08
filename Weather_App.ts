@@ -91,7 +91,9 @@ interface NominatimResult {
 class NominatimApi {
   constructor() {}
 
-  async get_geocoding(city_name: string) {
+  async get_geocoding(
+    city_name: string,
+  ): Promise<{ lat: number; lon: number } | null> {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city_name)}&format=json&limit=1`;
 
     try {
@@ -109,6 +111,7 @@ class NominatimApi {
 
       if (datas.length > 0) {
         var data = datas[0] as NominatimResult;
+        console.log(data);
         return {
           lat: parseFloat(data.lat),
           lon: parseFloat(data.lon),
@@ -128,9 +131,16 @@ const weather_api = new WeatherApi();
 const geocoding_api = new NominatimApi();
 
 // 取得自体はできているが、なぜかvalに持ってくるとPendingとなる
-// TODO:Pendingになる問題を解決する
-var val = geocoding_api.get_geocoding("福岡");
-console.log(val);
-weather_api.get_weather(
-  "https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_max&hourly=temperature_2m,precipitation_probability&current=temperature_2m,precipitation&timezone=Asia%2FTokyo",
-);
+
+// NOTE:get_geocoding関数がawaitで待つ処理を入れずに呼んでいたからPendingになっていた
+// awaitで待つことで期待通りの値が取得できた。
+(async () => {
+  var val = await geocoding_api.get_geocoding("福岡");
+  if (val != null) {
+    console.log(val);
+
+    weather_api.get_weather(
+      `https://api.open-meteo.com/v1/forecast?latitude=${val.lat}&longitude=${val.lon}&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_max&hourly=temperature_2m,precipitation_probability&current=temperature_2m,precipitation&timezone=Asia%2FTokyo`,
+    );
+  }
+})();
