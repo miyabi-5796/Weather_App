@@ -80,8 +80,57 @@ class WeatherApi {
   }
 }
 
-const api = new WeatherApi();
+interface NominatimResult {
+  place_id: number;
+  licence: string;
+  lat: string;
+  lon: string;
+  display_name: string;
+}
 
-api.get_weather(
+class NominatimApi {
+  constructor() {}
+
+  async get_geocoding(city_name: string) {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city_name)}&format=json&limit=1`;
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "MyWeatherApp/1.0 (contact: rmt0916@icloud.com)",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error. status: ${response.status}`);
+      }
+
+      const datas = (await response.json()) as NominatimResult[];
+
+      if (datas.length > 0) {
+        var data = datas[0] as NominatimResult;
+        return {
+          lat: parseFloat(data.lat),
+          lon: parseFloat(data.lon),
+        };
+      } else {
+        console.log("Not found location.");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      return null;
+    }
+  }
+}
+
+const weather_api = new WeatherApi();
+const geocoding_api = new NominatimApi();
+
+// 取得自体はできているが、なぜかvalに持ってくるとPendingとなる
+// TODO:Pendingになる問題を解決する
+var val = geocoding_api.get_geocoding("福岡");
+console.log(val);
+weather_api.get_weather(
   "https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_max&hourly=temperature_2m,precipitation_probability&current=temperature_2m,precipitation&timezone=Asia%2FTokyo",
 );
