@@ -127,20 +127,23 @@ class NominatimApi {
   }
 }
 
-const weather_api = new WeatherApi();
-const geocoding_api = new NominatimApi();
+const places = process.argv.slice(2, 3);
+if (places[0] != undefined) {
+  const place = places[0];
+  const weather_api = new WeatherApi();
+  const geocoding_api = new NominatimApi();
+  // 取得自体はできているが、なぜかvalに持ってくるとPendingとなる
 
-// 取得自体はできているが、なぜかvalに持ってくるとPendingとなる
+  // NOTE:get_geocoding関数がawaitで待つ処理を入れずに呼んでいたからPendingになっていた
+  // awaitで待つことで期待通りの値が取得できた。
+  (async () => {
+    var val = await geocoding_api.get_geocoding(place);
+    if (val != null) {
+      console.log(val);
 
-// NOTE:get_geocoding関数がawaitで待つ処理を入れずに呼んでいたからPendingになっていた
-// awaitで待つことで期待通りの値が取得できた。
-(async () => {
-  var val = await geocoding_api.get_geocoding("福岡");
-  if (val != null) {
-    console.log(val);
-
-    weather_api.get_weather(
-      `https://api.open-meteo.com/v1/forecast?latitude=${val.lat}&longitude=${val.lon}&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_max&hourly=temperature_2m,precipitation_probability&current=temperature_2m,precipitation&timezone=Asia%2FTokyo`,
-    );
-  }
-})();
+      weather_api.get_weather(
+        `https://api.open-meteo.com/v1/forecast?latitude=${val.lat}&longitude=${val.lon}&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_max&hourly=temperature_2m,precipitation_probability&current=temperature_2m,precipitation&timezone=Asia%2FTokyo`,
+      );
+    }
+  })();
+}
